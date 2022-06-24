@@ -55,7 +55,7 @@ def get_api_answer(current_timestamp):
 
     except Exception as exc:
         raise PracticumError(f'Ошибка подключения к API: {exc}') from exc
-    
+
     if response.status_code == HTTPStatus.OK:
         return response.json()
     else:
