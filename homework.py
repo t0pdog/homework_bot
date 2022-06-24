@@ -2,6 +2,7 @@ import logging
 import os
 import sys
 import time
+from http import HTTPStatus
 
 import requests
 from dotenv import load_dotenv
@@ -51,12 +52,14 @@ def get_api_answer(current_timestamp):
     params = {'from_date': timestamp}
     try:
         response = requests.get(ENDPOINT, headers=HEADERS, params=params)
-        response = response.json()
+
     except Exception as exc:
         raise PracticumError(f'Ошибка подключения к API: {exc}') from exc
-
+    
+    if response.status_code == HTTPStatus.OK:
+        return response.json()
     else:
-        return response
+        raise ConnectionError('Неверный статус-код сервера')
 
 
 def check_response(response):

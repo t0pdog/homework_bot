@@ -8,3 +8,7 @@ class PracticumError(Exception):
 
 class APIResponseError(Exception):
     pass
+
+
+class ConnectionError(Exception):
+    pass
