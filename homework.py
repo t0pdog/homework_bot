@@ -77,10 +77,10 @@ def check_response(response):
 
     elif not response.get('homeworks'):
         logging.debug('Статус проверки не изменился')
-        return []
+        return {}
 
     else:
-        return response['homeworks'][0]
+        return response['homeworks']
 
 
 def parse_status(homework):
