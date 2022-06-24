@@ -52,8 +52,9 @@ def get_api_answer(current_timestamp):
     try:
         response = requests.get(ENDPOINT, headers=HEADERS, params=params)
         response = response.json()
-    except PracticumError:
-        raise PracticumError('Ошибка подключения к API')
+    except Exception as exc:
+        raise PracticumError(f'Ошибка подключения к API: {exc}') from exc
+
     else:
         return response
 
