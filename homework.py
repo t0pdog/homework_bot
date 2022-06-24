@@ -48,12 +48,12 @@ def send_message(bot: Bot, message: str) -> None:
 def get_api_answer(current_timestamp):
     """Делает запрос к эндпоинту API-сервиса Практикума."""
     timestamp = current_timestamp or int(time.time())
-    params = {'from_date': 0}
+    params = {'from_date': timestamp}
     try:
         response = requests.get(ENDPOINT, headers=HEADERS, params=params)
         response = response.json()
     except PracticumError:
-        raise PracticumError(f'Ошибка подключения к API')
+        raise PracticumError('Ошибка подключения к API')
     else:
         return response
 
@@ -61,8 +61,8 @@ def get_api_answer(current_timestamp):
 def check_response(response):
     """Проверяет ответ API на корректность."""
     if not isinstance(response, dict) or response is None:
-            message = 'Ответ API не содержит словаря с данными'
-            raise TypeError(message)
+        message = 'Ответ API не содержит словаря с данными'
+        raise TypeError(message)
 
     elif any([response.get('homeworks') is None,
               response.get('current_date') is None]):
@@ -118,13 +118,12 @@ def main():
     """Основная логика работы бота."""
     if not check_tokens():
         error_message = (
-            f'Отсутствуют обязательные переменные окружения: '
+            'Отсутствуют обязательные переменные окружения: '
             'PRACTICUM_TOKEN, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID.'
             'Программа принудительно остановлена'
         )
         logging.critical(error_message)
         sys.exit(error_message)
-
 
     bot = Bot(token=TELEGRAM_TOKEN)
     current_timestamp = int(time.time())
