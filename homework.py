@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 from telegram import Bot
 
 from exceptions import (
-    APIResponseError, PracticumError, TelegramError
+    APIResponseError, PracticumError, TelegramError, ConnectionError
 )
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -24,7 +24,7 @@ RETRY_TIME = 600
 ENDPOINT = 'https://practicum.yandex.ru/api/user_api/homework_statuses/'
 HEADERS = {'Authorization': f'OAuth {PRACTICUM_TOKEN}'}
 
-HOMEWORK_STATUSES = {
+HOMEWORK_VERDICTS = {
     'approved': 'Работа проверена: ревьюеру всё понравилось. Ура!',
     'reviewing': 'Работа взята на проверку ревьюером.',
     'rejected': 'Работа проверена: у ревьюера есть замечания.'
@@ -50,6 +50,7 @@ def get_api_answer(current_timestamp):
     """Делает запрос к эндпоинту API-сервиса Практикума."""
     timestamp = current_timestamp or int(time.time())
     params = {'from_date': timestamp}
+
     try:
         response = requests.get(ENDPOINT, headers=HEADERS, params=params)
 
@@ -57,14 +58,19 @@ def get_api_answer(current_timestamp):
         raise PracticumError(f'Ошибка подключения к API: {exc}') from exc
 
     if response.status_code == HTTPStatus.OK:
-        return response.json()
+        try:
+            return response.json()
+        except Exception as exc:
+            raise APIResponseError(
+                f'Ошибка преобразования response в json: {exc}'
+            ) from exc
     else:
         raise ConnectionError('Неверный статус-код сервера')
 
 
 def check_response(response):
     """Проверяет ответ API на корректность."""
-    if not isinstance(response, dict) or response is None:
+    if not isinstance(response, dict):
         message = 'Ответ API не содержит словаря с данными'
         raise TypeError(message)
 
@@ -83,7 +89,7 @@ def check_response(response):
         return {}
 
     else:
-        return response['homeworks']
+        return response['homeworks'][0]
 
 
 def parse_status(homework):
@@ -97,8 +103,8 @@ def parse_status(homework):
     homework_name = homework['homework_name']
     homework_status = homework['status']
 
-    if homework_status in HOMEWORK_STATUSES:
-        verdict = HOMEWORK_STATUSES[homework_status]
+    if homework_status in HOMEWORK_VERDICTS:
+        verdict = HOMEWORK_VERDICTS[homework_status]
     else:
         message = 'Статус ответа не известен'
         raise APIResponseError(message)
@@ -138,8 +144,11 @@ def main():
     while True:
         try:
             response = get_api_answer(current_timestamp)
+
             result_check = check_response(response)
+
             current_report = parse_status(result_check)
+
             if current_report == prev_report:
                 logging.debug(
                     'Статус домашней работы не обновился.'
