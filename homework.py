@@ -89,7 +89,7 @@ def check_response(response):
         return {}
 
     else:
-        return response['homeworks'][0]
+        return response['homeworks']
 
 
 def parse_status(homework):
