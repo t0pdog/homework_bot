@@ -144,10 +144,10 @@ def main():
     while True:
         try:
             response = get_api_answer(current_timestamp)
-
+            print(response)
             result_check = check_response(response)
-
-            current_report = parse_status(result_check)
+            print(result_check)
+            current_report = parse_status(result_check[0])
 
             if current_report == prev_report:
                 logging.debug(
